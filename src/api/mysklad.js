@@ -108,7 +108,8 @@ export async function fetchAllProducts() {
         products.set(id, {
           name: row.name || null,
           code: row.code || null,
-          article: row.article || null
+          article: row.article || null,
+          minStock: row.minimumBalance || 0
         });
       }
     }
@@ -141,10 +142,14 @@ export async function* fetchStockByStore(productsCache = null) {
       const productName = cached?.name || row.name || null;
       const productCode = cached?.code || row.code || null;
       const productArticle = cached?.article || row.article || null;
+      const minStock = cached?.minStock || 0;
 
       for (const storeStock of row.stockByStore) {
         const storeId = extractUuidFromHref(storeStock.meta?.href);
         if (!storeId) continue;
+
+        const stock = storeStock.stock || 0;
+        const reserve = storeStock.reserve || 0;
 
         yield {
           productId,
@@ -152,9 +157,11 @@ export async function* fetchStockByStore(productsCache = null) {
           productCode,
           productArticle,
           storeId,
-          stock: storeStock.stock || 0,
-          reserve: storeStock.reserve || 0,
-          inTransit: storeStock.inTransit || 0
+          stock,
+          reserve,
+          inTransit: storeStock.inTransit || 0,
+          available: stock - reserve,
+          minStock
         };
       }
     }

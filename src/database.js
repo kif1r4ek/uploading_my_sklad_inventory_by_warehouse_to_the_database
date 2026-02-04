@@ -61,47 +61,51 @@ export async function updateSnapshotStatus(snapshotId, status, rowsProcessed, st
 
 export async function insertStockByStore(client, records) {
   if (!records.length) return;
-  
+
   const values = [];
   const params = [];
   let idx = 1;
-  
+
   for (const r of records) {
-    values.push(`($${idx++}, $${idx++}, $${idx++}, $${idx++}, $${idx++}, $${idx++}, $${idx++}, $${idx++}, $${idx++})`);
+    values.push(`($${idx++}, $${idx++}, $${idx++}, $${idx++}, $${idx++}, $${idx++}, $${idx++}, $${idx++}, $${idx++}, $${idx++}, $${idx++})`);
     params.push(
       r.snapshotId, r.productId, r.productName, r.productCode, r.productArticle,
-      r.storeId, r.stock, r.reserve, r.inTransit
+      r.storeId, r.stock, r.reserve, r.inTransit, r.available, r.minStock
     );
   }
-  
+
   const sql = `
-    INSERT INTO ms_stock_by_store 
-    (snapshot_id, product_id, product_name, product_code, product_article, store_id, stock, reserve, in_transit)
+    INSERT INTO ms_stock_by_store
+    (snapshot_id, product_id, product_name, product_code, product_article, store_id, stock, reserve, in_transit, available, min_stock)
     VALUES ${values.join(', ')}
     ON CONFLICT (snapshot_id, product_id, store_id) DO UPDATE SET
       stock = EXCLUDED.stock,
       reserve = EXCLUDED.reserve,
-      in_transit = EXCLUDED.in_transit
+      in_transit = EXCLUDED.in_transit,
+      available = EXCLUDED.available,
+      min_stock = EXCLUDED.min_stock
   `;
-  
+
   await client.query(sql, params);
 }
 
 export async function calculateAndInsertTotals(snapshotId) {
   const sql = `
-    INSERT INTO ms_stock_totals 
-    (snapshot_id, product_id, product_name, product_code, product_article, total_stock, total_reserve, total_in_transit)
-    SELECT 
-      snapshot_id, product_id, 
+    INSERT INTO ms_stock_totals
+    (snapshot_id, product_id, product_name, product_code, product_article, total_stock, total_reserve, total_in_transit, total_available, min_stock)
+    SELECT
+      snapshot_id, product_id,
       MAX(product_name), MAX(product_code), MAX(product_article),
-      SUM(stock), SUM(reserve), SUM(in_transit)
+      SUM(stock), SUM(reserve), SUM(in_transit), SUM(available), MAX(min_stock)
     FROM ms_stock_by_store
     WHERE snapshot_id = $1
     GROUP BY snapshot_id, product_id
     ON CONFLICT (snapshot_id, product_id) DO UPDATE SET
       total_stock = EXCLUDED.total_stock,
       total_reserve = EXCLUDED.total_reserve,
-      total_in_transit = EXCLUDED.total_in_transit
+      total_in_transit = EXCLUDED.total_in_transit,
+      total_available = EXCLUDED.total_available,
+      min_stock = EXCLUDED.min_stock
   `;
   await query(sql, [snapshotId]);
 }

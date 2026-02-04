@@ -350,7 +350,9 @@ SELECT
     product_article,
     total_stock, 
     total_reserve, 
-    total_in_transit
+    total_in_transit,
+    total_available,
+    min_stock
 FROM ms_stock_totals
 WHERE snapshot_id = (SELECT MAX(id) FROM ms_snapshots WHERE status='completed')
 ORDER BY total_stock DESC

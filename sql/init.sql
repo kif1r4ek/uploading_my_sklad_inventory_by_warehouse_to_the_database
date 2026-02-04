@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS ms_stock_by_store (
     stock NUMERIC(15, 4) DEFAULT 0,
     reserve NUMERIC(15, 4) DEFAULT 0,
     in_transit NUMERIC(15, 4) DEFAULT 0,
+    available NUMERIC(15, 4) DEFAULT 0,
+    min_stock NUMERIC(15, 4) DEFAULT 0,
     UNIQUE(snapshot_id, product_id, store_id)
 );
 
@@ -38,6 +40,8 @@ CREATE TABLE IF NOT EXISTS ms_stock_totals (
     total_stock NUMERIC(15, 4) DEFAULT 0,
     total_reserve NUMERIC(15, 4) DEFAULT 0,
     total_in_transit NUMERIC(15, 4) DEFAULT 0,
+    total_available NUMERIC(15, 4) DEFAULT 0,
+    min_stock NUMERIC(15, 4) DEFAULT 0,
     UNIQUE(snapshot_id, product_id)
 );
 
